@@ -1,0 +1,158 @@
+# The following notebook is for analysis of IPL matches from 2008 to 2016.
+```{r}
+#loading the dataset.
+df = read.csv("C:/Users/maven/Downloads/1643366361yYPNd/matches2008-2016.csv")
+head(df,5)
+```
+#Understanding the dataset.
+```{r}
+dim(df)
+```
+```{r}
+str(df)
+```
+
+```{r}
+table(df$season)
+```
+```{r}
+#understanding presence of NA values in dataset.
+colSums((is.na(df)))
+```
+```{r}
+class(df$player_of_match_id)
+```
+```{r}
+library(DMwR2)
+clean_df = centralImputation(df)
+```
+```{r}
+colSums(is.na(clean_df))
+```
+```{r}
+library(ggplot2)
+```
+
+#Visualization for better understanding of Data.
+```{r}
+df_2008 = subset(clean_df,season==2008)
+head(df_2008)
+```
+
+
+```{r}
+#Visualuzation of 2008
+ggplot(df_2008 ,aes(x=toss_winner))+ geom_bar(aes(fill=winner))+ xlab('Toss Win')+ylab('Wins')+ggtitle('Winning given toss won')
+```
+
+```{r}
+library(dplyr)
+```
+```{r}
+ggplot(clean_df,aes(x=venue_id))+geom_count(aes(y=winner),color='magenta',alpha=0.5)+xlab('Venues')+ylab('Winner Counts')+theme(axis.text.x = element_text(hjust=1,size=10))
+```
+
+```{r}
+match_per_venue = clean_df%>%summarise(count(clean_df,venue_id))
+ggplot(match_per_venue,aes(x=venue_id))+geom_count(aes(y=n,color=after_stat(n),size=after_stat(n)))+guides(color='legend')+ylab('Matches')+xlab('venue')+ggtitle('Matches per venue')
+```
+```{r}
+ggplot(clean_df,aes(x=venue_id))+geom_count(aes(y=dl_applied,size=after_stat(n),color=after_stat(n)))+guides(color='legend')+xlab('Venue')+ylab('DLS Applied')+ggtitle('Venue with DLS')
+```
+```{r}
+ggplot(clean_df,aes(x=dl_applied))+geom_count(aes(y=winner))+ scale_fill_gradient(low="red", high="yellow")+xlab('DLS')+ylab('Winner')+ggtitle('Winner with DLS')
+```
+```{r}
+ggplot(clean_df,aes(x=toss_decision))+geom_count(aes(y=winner,color=after_stat(n),size=after_stat(n)))+guides(color='legend')+xlab('Toss Decision')+ylab('Winner')+ggtitle('Winners with toss decision')
+```
+
+```{r}
+ggplot(clean_df,aes(x=toss_decision))+geom_count(aes(y=venue_id,color=after_stat(n),size=after_stat(n)))+guides(color='legend')+xlab('Toss Decision')+ylab('Venue ID wise')+ggtitle('Toss decision taken venue wise')
+```
+```{r}
+names(df_2008)
+```
+
+```{r}
+ggplot(df_2008,aes(x=toss_decision))+geom_bar(aes(fill=city))+xlab('Toss Decision')+ylab('City Counts')+ggtitle("Decision based on cities")
+```
+```{r}
+ggplot(df_2008,aes(x=city))+geom_bar(aes(fill=result))+xlab('City')+ylab("Result Count")+ggtitle('Results of match citywise')
+```
+
+```{r}
+df_2008 %>% group_by(winner,toss_winner) %>% ggplot(aes(x=winner))+geom_bar(aes(fill=toss_decision))+xlab('Winner')+ylab('Wining given toss decision')
+```
+
+```{r}
+df_2008%>%group_by(winner)%>%summarise(winner.freq = table(winner)/length(df_2008$winner))%>%ggplot(aes(x=winner,y=winner.freq))+geom_col()+xlab('Winner')+ylab('Percentage of Win')+guides(color='legend')+ggtitle('Winn percentage of each team in 2008')
+```
+
+```{r}
+df_2008 %>% ggplot(aes(x=winner,y=city))+geom_count(aes(color=winner ))+guides(color='legend')+xlab('Winner')+ylab('City')+ggtitle('Win counts of Teams in Home')
+```
+```{r}
+#Extending our evaluation to suceeding year.
+df_2009 = subset(clean_df,season==2009)
+```
+
+```{r}
+str(df_2009)
+```
+
+
+```{r}
+df_2009 %>% group_by(city)%>%summarise(city.count=table(city))%>%ggplot(aes(x=city,y=city.count))+geom_col(aes(fill=city,color=city))+xlab('City')+ylab('Count')+ggtitle('City with most match counts')+theme(axis.text.x = element_text(angle=90))
+```
+
+
+```{r}
+df_2009 %>% group_by(city,winner) %>% summarise(winner_per_city = table(winner)) %>%ggplot(aes(x=city,y=winner_per_city))+geom_point(aes(col=winner))+xlab('Winner')+ylab('Wins')+ggtitle('Team with most wins at each venue')+theme(axis.text.x=element_text(angle=90))
+```
+
+```{r}
+df_2009 %>% group_by(toss_winner,winner) %>% ggplot(aes(x=winner))+geom_bar(aes(fill=toss_winner))+xlab('Winners')+ylab('Count')+ggtitle('Wining after toss win')
+```
+```{r}
+df_2009 %>% group_by(toss_decision,winner) %>% ggplot(aes(x=winner))+geom_bar(aes(fill=toss_decision))+xlab('Winner')+ylab('Win counts')+ggtitle('Toss decision and wins')
+```
+```{r}
+df_2009 %>% group_by(toss_decision,venue_id)%>%ggplot(aes(x=venue_id))+geom_bar(aes(fill=toss_decision))+guides(color='legend')+xlab('VenuesID')+ylab('Count')+ggtitle('Toss decision based on venues')
+```
+
+```{r}
+df_2009_sm = df_2009%>%group_by(venue,toss_winner,winner)%>%filter(toss_winner==winner)
+head(df_2009_sm,10)
+```
+```{r}
+df_2009_sm %>% ggplot(aes(x=city))+geom_count(aes(y=winner,color=toss_winner,size=toss_winner))+guides(color='legend')+xlab('City')+ylab('Winner count by toss win')+ggtitle('Team winning after toss win at different venue')+theme(axis.text.x = element_text(angle=90))
+```
+
+```{r}
+df_2009%>%group_by(city)%>%summarise('avg_win_by_run'=mean(win_by_runs))%>%ggplot(aes(x=city))+geom_col(aes(y=avg_win_by_run,fill=avg_win_by_run))+xlab('City')+ylab('Runs')+ggtitle('Average run by wins at each venue')+theme(axis.text.x=element_text(angle=90))
+```
+
+```{r}
+df_2009%>%group_by(city)%>%summarise(avg_win_by_wicket=round(mean(win_by_wickets)))%>%ggplot(aes(x=city))+geom_col(aes(y=avg_win_by_wicket,fill=city))+xlab('City')+ylab('Average Wickets')+ggtitle('Avg wickets at each venue in matches won')+theme(axis.text.x=element_text(angle=90))
+```
+```{r}
+df_2009%>%group_by(player_of_match)%>%summarise('Man_of_the_match_count'=table(player_of_match))%>%ggplot(aes(x=player_of_match))+geom_col(aes(y=Man_of_the_match_count,fill=Man_of_the_match_count))+xlab('Player of the match')+ylab('Count')+ggtitle('Most man of the match award by player')+theme(axis.text.x=element_text(angle=90))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
